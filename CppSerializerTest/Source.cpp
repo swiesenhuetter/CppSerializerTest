@@ -8,6 +8,7 @@
 struct Record 
 {
     enum class DataType { INT, DBL, WSTR, BOOL };
+
     DataType type;
     void *pData;
     std::string name;
@@ -18,33 +19,33 @@ struct Record
 
 std::ostream& operator<<(std::ostream& os, const Record::DataType& type)
 {
-    switch (type)
-    {
-    case Record::DataType::BOOL:
-    {
-        os << "BOOL";
-        break;
-    }
-    case Record::DataType::INT:
-    {
-        os << "INT";
-        break;
-    }
-    case Record::DataType::DBL:
-    {
-        os << "DBL";
-        break;
-    }
-    case Record::DataType::WSTR:
-    {
-        os << "WSTR";
-        break;
-    }
-    default:
-        break;
-    }
+    static const std::map<Record::DataType, std::string> type2Str{
+        { Record::DataType::INT, "INT" },
+        { Record::DataType::DBL, "DBL" },
+        { Record::DataType::WSTR, "WSTR" },
+        { Record::DataType::BOOL, "BOOL" }
+    };
+
+    os << type2Str.at(type);
     return os;
 }
+
+std::istream& operator>>(std::istream& is, Record::DataType& type)
+{
+    static const std::map<std::string, Record::DataType> str2Type{
+        { "INT", Record::DataType::INT},
+        { "DBL", Record::DataType::DBL},
+        { "WSTR", Record::DataType::WSTR},
+        { "BOOL", Record::DataType::BOOL}
+    };
+
+    std::string typeId;
+    std::getline(is, typeId, ':');
+    type = str2Type.at(typeId);
+    return is;
+}
+
+
 
 std::ostream& operator<<(std::ostream& os, const Record& rec)
 {
@@ -68,8 +69,9 @@ std::ostream& operator<<(std::ostream& os, const Record& rec)
     }
     case Record::DataType::WSTR:
     {
-        std::wstring_convert<std::codecvt_utf8<wchar_t>> myconv;
-        os << myconv.to_bytes(*static_cast<std::wstring*>(rec.pData));
+        //std::wstring_convert<std::codecvt_utf8<wchar_t>> myconv;
+        //os << myconv.to_bytes(*static_cast<std::wstring*>(rec.pData));
+        os << static_cast<std::string*>(rec.pData);
         break;
     }
     default:
@@ -84,9 +86,29 @@ std::istream& operator>>(std::istream& is, Record& rec)
 {
     char c{};
     is >> c; // {
-    std::string typeId;
-    std::getline(is, typeId, ':');
+    is >> rec.type;
     std::getline(is, rec.name, ':');
+    switch (rec.type)
+    {
+    case Record::DataType::INT:
+        is >> *(static_cast<int*>(rec.pData));
+        break;
+    case Record::DataType::DBL:
+        is >> *(static_cast<double*>(rec.pData));
+        break;
+    case Record::DataType::BOOL:
+        is >> *(static_cast<bool*>(rec.pData));
+        break;
+    case Record::DataType::WSTR:
+    {
+        auto pstr = static_cast<std::string*>(rec.pData);
+        std::getline(is, *pstr, '}');
+        break;
+    }
+    }
+
+
+
     is >> c;
     return is;
 }
