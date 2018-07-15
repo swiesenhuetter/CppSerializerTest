@@ -7,7 +7,7 @@
 
 struct Record 
 {
-    enum class DataType { INT, DBL, WSTR, BOOL };
+    enum class DataType { INT, DBL, STR, BOOL };
 
     DataType type;
     void *pData;
@@ -22,7 +22,7 @@ std::ostream& operator<<(std::ostream& os, const Record::DataType& type)
     static const std::map<Record::DataType, std::string> type2Str{
         { Record::DataType::INT, "INT" },
         { Record::DataType::DBL, "DBL" },
-        { Record::DataType::WSTR, "WSTR" },
+        { Record::DataType::STR, "STR" },
         { Record::DataType::BOOL, "BOOL" }
     };
 
@@ -35,7 +35,7 @@ std::istream& operator>>(std::istream& is, Record::DataType& type)
     static const std::map<std::string, Record::DataType> str2Type{
         { "INT", Record::DataType::INT},
         { "DBL", Record::DataType::DBL},
-        { "WSTR", Record::DataType::WSTR},
+        { "STR", Record::DataType::STR},
         { "BOOL", Record::DataType::BOOL}
     };
 
@@ -44,8 +44,6 @@ std::istream& operator>>(std::istream& is, Record::DataType& type)
     type = str2Type.at(typeId);
     return is;
 }
-
-
 
 std::ostream& operator<<(std::ostream& os, const Record& rec)
 {
@@ -67,11 +65,11 @@ std::ostream& operator<<(std::ostream& os, const Record& rec)
         os << *static_cast<double*>(rec.pData);
         break;
     }
-    case Record::DataType::WSTR:
+    case Record::DataType::STR:
     {
         //std::wstring_convert<std::codecvt_utf8<wchar_t>> myconv;
         //os << myconv.to_bytes(*static_cast<std::wstring*>(rec.pData));
-        os << static_cast<std::string*>(rec.pData);
+        os << '\"' << (*static_cast<std::string*>(rec.pData)) << '\"';
         break;
     }
     default:
@@ -99,16 +97,14 @@ std::istream& operator>>(std::istream& is, Record& rec)
     case Record::DataType::BOOL:
         is >> *(static_cast<bool*>(rec.pData));
         break;
-    case Record::DataType::WSTR:
+    case Record::DataType::STR:
     {
+        is >> c; // " 
         auto pstr = static_cast<std::string*>(rec.pData);
-        std::getline(is, *pstr, '}');
+        std::getline(is, *pstr, '\"');
         break;
     }
     }
-
-
-
     is >> c;
     return is;
 }
@@ -118,18 +114,18 @@ class Job
 {
 public:
     Job() {};
-    Job(int i, double d, std::wstring ws)
+    Job(int i, double d, std::string ws)
         : inum(i), myValue(d), name(ws) {}
 
 private:
     int inum{};
     double myValue{};
-    std::wstring name;
+    std::string name;
 
     std::vector<Record> properties{
         { "inum",  Record::DataType::INT, &inum },
         { "dbl",  Record::DataType::DBL, &myValue },
-        { "name", Record::DataType::WSTR, &name}
+        { "name", Record::DataType::STR, &name}
     };
 
     friend std::ostream& operator<<(std::ostream& os, const Job& j);
@@ -156,9 +152,9 @@ std::ostream& operator<< (std::ostream& os, const Job& j)
 
 
 TEST_CASE("Serializer: object to string") {
-    Job j1(1, 2.2, L"tamping");
-    Job j2(3, 4.4, L"s -labtrack");
-    Job j3(5, 6.6, L"üהציאט");
+    Job j1(1, 2.2, "tamping");
+    Job j2(3, 4.4, "s -labtrack");
+    Job j3(5, 6.6, "üהציאט");
 
     std::ostringstream os;
     os << j1 << j2 << j3;
