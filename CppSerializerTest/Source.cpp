@@ -117,6 +117,8 @@ public:
     Job(int i, double d, std::string ws)
         : inum(i), myValue(d), name(ws) {}
 
+    bool operator== (const Job& j) const;
+
 private:
     int inum{};
     double myValue{};
@@ -131,6 +133,11 @@ private:
     friend std::ostream& operator<<(std::ostream& os, const Job& j);
     friend std::istream& operator>>(std::istream& is, Job& j);
 };
+
+bool Job::operator== (const Job& j) const
+{
+    return (inum == j.inum && myValue == j.myValue && name == j.name);
+}
 
 std::istream& operator>>(std::istream& is, Job& j)
 {
@@ -162,6 +169,10 @@ TEST_CASE("Serializer: object to string") {
     std::istringstream is(os.str());
     Job jc1, jc2, jc3;
     is >> jc1 >> jc2 >> jc3;
+
+    REQUIRE(j1 == jc1);
+    REQUIRE(j2 == jc2);
+    REQUIRE(j3 == jc3);
 
 }
 
