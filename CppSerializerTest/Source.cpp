@@ -17,37 +17,9 @@ struct Record
     {}
 };
 
-std::ostream& operator<<(std::ostream& os, const Record::DataType& type)
-{
-    static const std::map<Record::DataType, std::string> type2Str{
-        { Record::DataType::INT, "INT" },
-        { Record::DataType::DBL, "DBL" },
-        { Record::DataType::STR, "STR" },
-        { Record::DataType::BOOL, "BOOL" }
-    };
-
-    os << type2Str.at(type);
-    return os;
-}
-
-std::istream& operator>>(std::istream& is, Record::DataType& type)
-{
-    static const std::map<std::string, Record::DataType> str2Type{
-        { "INT", Record::DataType::INT},
-        { "DBL", Record::DataType::DBL},
-        { "STR", Record::DataType::STR},
-        { "BOOL", Record::DataType::BOOL}
-    };
-
-    std::string typeId;
-    std::getline(is, typeId, ':');
-    type = str2Type.at(typeId);
-    return is;
-}
-
 std::ostream& operator<<(std::ostream& os, const Record& rec)
 {
-    os << '{' << rec.type << ':' << rec.name << ':';
+    os << '{' << rec.name << ':';
     switch (rec.type)
     {
     case Record::DataType::BOOL:
@@ -84,8 +56,7 @@ std::istream& operator>>(std::istream& is, Record& rec)
 {
     char c{};
     is >> c; // {
-    is >> rec.type;
-    std::getline(is, rec.name, ':');
+     std::getline(is, rec.name, ':');
     switch (rec.type)
     {
     case Record::DataType::INT:
