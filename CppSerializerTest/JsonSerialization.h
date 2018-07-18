@@ -87,6 +87,84 @@ std::istream& operator>>(std::istream& is, std::vector<Record>& records)
     return is;
 }
 
+namespace atjson
+{
+    template <typename KeyType, typename ValType>
+    std::pair<KeyType, ValType> key_val(KeyType k, ValType v) { return std::make_pair(k, v); }
 
+    template <typename ValType>
+    std::ostream& jsonkey(std::ostream& os, std::pair<const char*, ValType>& kv)
+    {
+        os << '\"' << kv.first << "\": ";
+        return os;
+    }
 
+    template <typename ValType>
+    std::ostream& write(std::ostream& os, std::pair<const char*, ValType> kv)
+    {
+        jsonkey(os, kv);
+        return (os << kv.second);
+    }
+
+    std::ostream& write(std::ostream& os, std::pair<const char*, bool> b)
+    {
+        jsonkey(os, b);
+        os << (b.second ? "true" : "false");
+        return os;
+    }
+
+    std::ostream& write(std::ostream& os, std::pair<const char*, std::string> str)
+    {
+        jsonkey(os, str);
+        os << '\"' << str.second << '\"';
+        return os;
+    }
+
+    std::ostream& write(std::ostream& os)
+    {
+        return os;
+    }
+
+    template <typename Head, typename... Tail>
+    std::ostream& write(std::ostream& os, const Head& head, const Tail&... tail)
+    {
+        write(os, head);
+        if (sizeof... (Tail))
+        {
+            os << ",\n";
+            return write(os, tail...);
+        }
+        else
+        {
+            return os << '\n';
+        }
+    }
+
+    struct JsonObject
+    {
+        JsonObject(std::ostream& os, const char* objName) 
+            :os_(os)
+        {
+            os_ << objName << ": {\n";
+        }
+        ~JsonObject()
+        {
+            os_ << "\n}\n";
+        }
+        std::ostream& os_;
+    };
+
+    template <typename Container>
+    std::ostream& toJson(std::ostream& os, Container c)
+    {
+        os << "[";
+        for (auto& elem : c)
+        {
+            elem.toJson(os);
+        }
+        os << "]\n";
+        return os;
+    }
+
+}
 

@@ -21,6 +21,19 @@ public:
         init();
     }
 
+    std::ostream& toJson(std::ostream& os)
+    {
+        using namespace atjson;
+
+        JsonObject j(os, "Job");
+
+        return atjson::write(os,
+            key_val("inum", inum),
+            key_val("myValue", myValue),
+            key_val("name", name),
+            key_val("isRelative", isRelative));
+    }
+
     void init()
     {
         records = std::vector<Record>{

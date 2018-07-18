@@ -21,7 +21,20 @@ TEST_CASE("Serializer: object to stream, string and back") {
     REQUIRE(j3 == jc3);
 }
 
-TEST_CASE("Serializer: string to object") {
+TEST_CASE("Serializer: object to stream (New method, variadic template)") {
 
+    std::vector<Job> jobs{
+    {1, 2.2, "tamping", true},
+    {3, 4.4, "slabtrack", false},
+    {5, 6.6, "sürvey", true } };
+
+    std::ostringstream os;
+
+    jobs[0].toJson(os);
+    jobs[1].toJson(os);
+    jobs[2].toJson(os);
+    atjson::toJson(os, jobs);
+
+    std::cout << os.str();
 }
 
