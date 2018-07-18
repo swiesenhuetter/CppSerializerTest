@@ -3,6 +3,7 @@
 #include <codecvt>
 #include "serialization.h"
 #include "job.h"
+#include "JsonSerialization.h"
 
 TEST_CASE("Serializer: object to stream, string and back") {
     Job j1(1, 2.2, "tamping", true);
@@ -21,8 +22,9 @@ TEST_CASE("Serializer: object to stream, string and back") {
     REQUIRE(j3 == jc3);
 }
 
-TEST_CASE("Serializer: object to stream (New method, variadic template)") {
 
+
+TEST_CASE("Serializer: object to stream (New method, variadic template)") {
     std::vector<Job> jobs{
     {1, 2.2, "tamping", true},
     {3, 4.4, "slabtrack", false},
@@ -36,5 +38,17 @@ TEST_CASE("Serializer: object to stream (New method, variadic template)") {
     atjson::toJson(os, jobs);
 
     std::cout << os.str();
+
+    std::vector<Job> jobsRestored;
+
+
+}
+
+TEST_CASE("Serializer: preprocessor magic")
+{
+    int myinteger{12345};
+    auto mi = KEY_VAL(myinteger);
+    REQUIRE(mi.first == "myinteger");
+    REQUIRE(mi.second == myinteger);
 }
 

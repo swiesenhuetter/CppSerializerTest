@@ -87,57 +87,57 @@ std::istream& operator>>(std::istream& is, std::vector<Record>& records)
     return is;
 }
 
+// this macro creates a pair<const char*, ValType> first : name of a value second : value
+#define KEY_VAL(NAME)  std::make_pair (#NAME, NAME) 
+
 namespace atjson
 {
-    template <typename KeyType, typename ValType>
-    std::pair<KeyType, ValType> key_val(KeyType k, ValType v) { return std::make_pair(k, v); }
-
+    /// first element of a key-value pair: "key":
+    /// tab because values are inside an { object }
     template <typename ValType>
-    std::ostream& jsonkey(std::ostream& os, std::pair<const char*, ValType>& kv)
+    std::ostream& write_key(std::ostream& os, std::pair<const char*, ValType>& kv)
     {
-        os << '\"' << kv.first << "\": ";
+        os << "\t\"" << kv.first << "\": ";
         return os;
     }
 
+    /// generic output function : key followed by ostream inserted value
     template <typename ValType>
     std::ostream& write(std::ostream& os, std::pair<const char*, ValType> kv)
     {
-        jsonkey(os, kv);
+        write_key(os, kv);
         return (os << kv.second);
     }
 
+    /// specialization: bool format instead of 0/1 numeric
     std::ostream& write(std::ostream& os, std::pair<const char*, bool> b)
     {
-        jsonkey(os, b);
+        write_key(os, b);
         os << (b.second ? "true" : "false");
         return os;
     }
 
+    /// specialization: json string values are in double quotes
     std::ostream& write(std::ostream& os, std::pair<const char*, std::string> str)
     {
-        jsonkey(os, str);
+        write_key(os, str);
         os << '\"' << str.second << '\"';
         return os;
     }
 
+    // not actually called, needed for compiler recursion
     std::ostream& write(std::ostream& os)
     {
         return os;
     }
 
+    // recursive variadic template to match any argument list of values to serialize
     template <typename Head, typename... Tail>
     std::ostream& write(std::ostream& os, const Head& head, const Tail&... tail)
     {
         write(os, head);
-        if (sizeof... (Tail))
-        {
-            os << ",\n";
-            return write(os, tail...);
-        }
-        else
-        {
-            return os << '\n';
-        }
+        os << ",\n";
+        return write(os, tail...);
     }
 
     struct JsonObject
@@ -149,7 +149,7 @@ namespace atjson
         }
         ~JsonObject()
         {
-            os_ << "\n}\n";
+            os_ << "\n}";
         }
         std::ostream& os_;
     };
@@ -161,6 +161,7 @@ namespace atjson
         for (auto& elem : c)
         {
             elem.toJson(os);
+            os << ",\n";
         }
         os << "]\n";
         return os;

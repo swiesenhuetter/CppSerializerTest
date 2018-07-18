@@ -28,10 +28,10 @@ public:
         JsonObject j(os, "Job");
 
         return atjson::write(os,
-            key_val("inum", inum),
-            key_val("myValue", myValue),
-            key_val("name", name),
-            key_val("isRelative", isRelative));
+            KEY_VAL(inum),
+            KEY_VAL(myValue),
+            KEY_VAL(name),
+            KEY_VAL(isRelative));
     }
 
     void init()
