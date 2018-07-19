@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include "record.h"
+#include "json.hpp"
 
 std::ostream& operator<<(std::ostream& os, const Record& rec)
 {

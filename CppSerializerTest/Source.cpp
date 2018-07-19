@@ -69,3 +69,13 @@ TEST_CASE("Serializer: preprocessor magic")
     REQUIRE(int2 == 111);
 }
 
+
+TEST_CASE("Serializer: using nlohmann json header")
+{
+    nlohmann::json j;
+
+    std::vector<int> ints{ 3,5,76,78,8,9, 90,0,-3,-3 };
+    j["ints"] = ints;
+    std::cout << j.dump();
+}
+
