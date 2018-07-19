@@ -88,7 +88,8 @@ std::istream& operator>>(std::istream& is, std::vector<Record>& records)
 }
 
 // this macro creates a pair<const char*, ValType> first : name of a value second : value
-#define KEY_VAL(NAME)  std::make_pair (#NAME, NAME) 
+#define KEY_VAL(NAME)  std::make_pair(#NAME, NAME) 
+#define KEY_VALPTR(NAME) std::make_pair(#NAME, &NAME) 
 
 namespace atjson
 {
@@ -140,6 +141,44 @@ namespace atjson
         return write(os, tail...);
     }
 
+
+    /// generic deserialize function : key followed by ostream inserted value
+    template <typename ValPtr>
+    std::istream& read(std::istream& is, std::pair<const char*, ValPtr>& kv)
+    {
+        std::string name;
+        is >> name;
+        return (is >> *kv.second);
+    }
+
+    /// special string deserialize function
+    std::istream& read(std::istream& is, std::pair<const char*, std::string*>& str)
+    {
+        std::string name;
+        is >> name;
+        char c;
+        is >> c;
+        return std::getline(is, *str.second, '\"');
+    }
+
+
+
+    // not actually called, needed for compiler recursion
+    std::istream& read(std::istream& is)
+    {
+        return is;
+    }
+    // reverse recursive variadic template to match any sequence of key/value pairs to deserialize
+    template <typename Head, typename... Tail>
+    std::istream& read(std::istream& is, Head&& head, Tail&&... tail) // head&tail rvalues of key/value pairs
+    {
+        read(is, head);
+        char c;
+        is >> c; // ,
+        return read(is, tail...);
+    }
+
+
     struct JsonObject
     {
         JsonObject(std::ostream& os, const char* objName) 
@@ -166,6 +205,26 @@ namespace atjson
         os << "]\n";
         return os;
     }
+
+    template <typename Container>
+    Container fromJson(std::istream& is)
+    {
+        char c{};
+        is >> c; // [
+        std::string name;
+        is >> name;
+        typename Container::value_type element;
+        is >> c; // {
+        element.fromJson(is);
+        is >> c; // }
+        //is >> element;
+        Container deserialized;
+        deserialized.push_back(element);
+        return deserialized;
+    }
+
+
+
 
 }
 

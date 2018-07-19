@@ -34,6 +34,16 @@ public:
             KEY_VAL(isRelative));
     }
 
+    std::istream& fromJson(std::istream& is)
+    {
+        return atjson::read(is,
+            KEY_VALPTR(inum),
+            KEY_VALPTR(myValue),
+            KEY_VALPTR(name),
+            KEY_VALPTR(isRelative));
+    }
+
+
     void init()
     {
         records = std::vector<Record>{

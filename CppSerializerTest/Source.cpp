@@ -32,23 +32,40 @@ TEST_CASE("Serializer: object to stream (New method, variadic template)") {
 
     std::ostringstream os;
 
-    jobs[0].toJson(os);
-    jobs[1].toJson(os);
-    jobs[2].toJson(os);
+//    jobs[0].toJson(os);
+//    jobs[1].toJson(os);
+//    jobs[2].toJson(os);
     atjson::toJson(os, jobs);
 
     std::cout << os.str();
 
-    std::vector<Job> jobsRestored;
+    std::istringstream is(os.str());
+    auto jobsRestored = atjson::fromJson<std::vector<Job>>(is);
+
 
 
 }
 
 TEST_CASE("Serializer: preprocessor magic")
 {
-    int myinteger{12345};
+    const int myinteger{12345};
     auto mi = KEY_VAL(myinteger);
+
     REQUIRE(mi.first == "myinteger");
     REQUIRE(mi.second == myinteger);
+
+    decltype(mi.first) other{};
+
+    mi.second = 111;
+    REQUIRE(mi.second != myinteger);
+
+    int int2{ 6789 };
+
+    auto m2 = KEY_VALPTR(int2);
+    REQUIRE(m2.first == "int2");
+    REQUIRE(*m2.second == int2);
+    *m2.second = 111;
+    REQUIRE(*m2.second == int2);
+    REQUIRE(int2 == 111);
 }
 
