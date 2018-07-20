@@ -6,9 +6,9 @@
 #include "JsonSerialization.h"
 
 TEST_CASE("Serializer: object to stream, string and back") {
-    Job j1(1, 2.2, "tamping", true);
-    Job j2(3, 4.4, "slabtrack", false);
-    Job j3(5, 6.6, "üהציאט", true);
+    Job j1(1, 2.2, L"tamping", true);
+    Job j2(3, 4.4, L"slabtrack", false);
+    Job j3(5, 6.6, L"üהציאט", true);
 
     std::ostringstream os;
     os << j1 << j2 << j3;
@@ -26,9 +26,9 @@ TEST_CASE("Serializer: object to stream, string and back") {
 
 TEST_CASE("Serializer: object to stream (New method, variadic template)") {
     std::vector<Job> jobs{
-    {1, 2.2, "tamping", true},
-    {3, 4.4, "slabtrack", false},
-    {5, 6.6, "sürvey", true } };
+    {1, 2.2, L"tamping", true},
+    {3, 4.4, L"slabtrack", false},
+    {5, 6.6, L"sürvey", true } };
 
     std::ostringstream os;
 
@@ -77,5 +77,15 @@ TEST_CASE("Serializer: using nlohmann json header")
     std::vector<int> ints{ 3,5,76,78,8,9, 90,0,-3,-3 };
     j["ints"] = ints;
     std::cout << j.dump();
+
+    std::vector<Job> jobs{
+        { 1, 2.2, L"tamping", true },
+        { 3, 4.4, L"slabtrack", false },
+        { 5, 6.6, L"süürvey", true } };
+    j["jobs"] = jobs;
+
+    std::cout << j.dump();
+
+
 }
 

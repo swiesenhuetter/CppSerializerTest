@@ -1,8 +1,9 @@
 #pragma once
-#include <string>
-#include <vector>
 #include "record.h"
 #include "json.hpp"
+#include <codecvt>
+#include <string>
+#include <vector>
 
 std::ostream& operator<<(std::ostream& os, const Record& rec)
 {
@@ -26,9 +27,8 @@ std::ostream& operator<<(std::ostream& os, const Record& rec)
     }
     case Record::DataType::STR:
     {
-        //std::wstring_convert<std::codecvt_utf8<wchar_t>> myconv;
-        //os << myconv.to_bytes(*static_cast<std::wstring*>(rec.pData));
-        os << '\"' << (*static_cast<std::string*>(rec.pData)) << '\"';
+        std::wstring_convert<std::codecvt_utf8<wchar_t>> myconv;
+        os << '\"' << myconv.to_bytes(*static_cast<std::wstring*>(rec.pData)) << '\"';
         break;
     }
     default:
@@ -70,8 +70,11 @@ std::istream& operator>>(std::istream& is, Record& rec)
     case Record::DataType::STR:
     {
         is >> c; // " 
-        auto pstr = static_cast<std::string*>(rec.pData);
-        std::getline(is, *pstr, '\"');
+        std::string txt;
+        std::getline(is, txt, '\"');
+        std::wstring_convert<std::codecvt_utf8<wchar_t>> myconv;
+        auto pwstr = static_cast<std::wstring*>(rec.pData);
+        *pwstr = myconv.from_bytes(txt);
         break;
     }
     }
@@ -120,10 +123,11 @@ namespace atjson
     }
 
     /// specialization: json string values are in double quotes
-    std::ostream& write(std::ostream& os, std::pair<const char*, std::string> str)
+    std::ostream& write(std::ostream& os, std::pair<const char*, std::wstring> str)
     {
         write_key(os, str);
-        os << '\"' << str.second << '\"';
+        std::wstring_convert<std::codecvt_utf8<wchar_t>> myconv;
+        os << '\"' << myconv.to_bytes(str.second) << '\"';
         return os;
     }
 
@@ -153,13 +157,16 @@ namespace atjson
     }
 
     /// special string deserialize function
-    std::istream& read(std::istream& is, std::pair<const char*, std::string*>& str)
+    std::istream& read(std::istream& is, std::pair<const char*, std::wstring*>& str)
     {
-        std::string name;
-        is >> name;
+        std::string text;
+        is >> text;
         char c;
         is >> c;
-        return std::getline(is, *str.second, '\"');
+        std::getline(is, text, '\"');
+        std::wstring_convert<std::codecvt_utf8<wchar_t>> myconv;
+        *str.second = myconv.from_bytes(text);
+        return is;
     }
 
 
@@ -223,8 +230,6 @@ namespace atjson
         deserialized.push_back(element);
         return deserialized;
     }
-
-
 
 
 }

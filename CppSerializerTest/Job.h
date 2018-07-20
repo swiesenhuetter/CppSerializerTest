@@ -11,15 +11,21 @@ class Job
 {
 public:
     Job() 
-        : Job(0,0.0,"",false)
+        : Job(0,0.0,L"",false)
     {
     };
 
-    Job(int i, double d, std::string ws, bool r)
+    Job(int i, double d, std::wstring ws, bool r)
         : inum(i), myValue(d), name(ws), isRelative(r) 
     {
         init();
     }
+
+    void to_json(nlohmann::json& jsn) const
+    {
+        jsn = nlohmann::json{  KEY_VAL(inum) , KEY_VAL(myValue), KEY_VAL(name), KEY_VAL(isRelative) };
+    }
+
 
     std::ostream& toJson(std::ostream& os)
     {
@@ -59,7 +65,7 @@ public:
 private:
     int inum{};
     double myValue{};
-    std::string name;
+    std::wstring name;
     bool isRelative{};
 
     friend std::ostream& operator<<(std::ostream& os, const Job& j);
@@ -86,5 +92,9 @@ std::ostream& operator<< (std::ostream& os, const Job& j)
     return os;
 }
 
+void to_json(nlohmann::json& jsn, const Job& job)
+{
+    job.to_json(jsn);
+}
 
 
