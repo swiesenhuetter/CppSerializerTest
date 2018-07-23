@@ -1,49 +1,62 @@
 #define CATCH_CONFIG_MAIN
 #include "catch.hpp"
-#include <codecvt>
+
 #include "serialization.h"
 #include "job.h"
+#include "Json.hpp"
 #include "JsonSerialization.h"
+#include <codecvt>
+#include <fcntl.h>
 
-TEST_CASE("Serializer: object to stream, string and back") {
-    Job j1(1, 2.2, L"tamping", true);
-    Job j2(3, 4.4, L"slabtrack", false);
-    Job j3(5, 6.6, L"üäöéàè", true);
+TEST_CASE("Serializer: object to json and back") {
 
-    std::ostringstream os;
-    os << j1 << j2 << j3;
-    std::cout << os.str();
-    std::istringstream is(os.str());
+    using nlohmann::json;
+
+    Job j1(1, 2.2, "tamping", true);
+    Job j2(3, 4.4, "slabtrack", false);
+    Job j3(5, 6.6, u8"üäöéàè", true);
+
+    json jsn;
+    to_json(jsn, j1);
+    auto jsntext1 = jsn.dump();
+    to_json(jsn, j2);
+    auto jsntext2 = jsn.dump();
+    to_json(jsn, j3);
+    auto jsntext3 = jsn.dump();
+
     Job jc1, jc2, jc3;
-    is >> jc1 >> jc2 >> jc3;
 
+    from_json(json::parse(jsntext1), jc1);
     REQUIRE(j1 == jc1);
+    from_json(json::parse(jsntext2), jc2);
     REQUIRE(j2 == jc2);
+    from_json(json::parse(jsntext3), jc3);
     REQUIRE(j3 == jc3);
 }
 
+TEST_CASE("Serializer: object vector to json and back") {
 
+    using nlohmann::json;
 
-TEST_CASE("Serializer: object to stream (New method, variadic template)") {
     std::vector<Job> jobs{
-    {1, 2.2, L"tamping", true},
-    {3, 4.4, L"slabtrack", false},
-    {5, 6.6, L"sürvey", true } };
+    {1, 2.2, "tamping", true},
+    {3, 4.4, "slabtrack", false },
+    {5, 6.6, "slabtrack", true },
+    {7, 8.8, u8"sürvey", false } };
 
-    std::ostringstream os;
+    json jsn = json(jobs);
 
-//    jobs[0].toJson(os);
-//    jobs[1].toJson(os);
-//    jobs[2].toJson(os);
-    atjson::toJson(os, jobs);
-
-    std::cout << os.str();
-
-    std::istringstream is(os.str());
-    auto jobsRestored = atjson::fromJson<std::vector<Job>>(is);
+    ::SetConsoleOutputCP(CP_UTF8);
+    setvbuf(stdout, nullptr, _IOFBF, 4000);
 
 
+    std::cout << jsn.dump(4);
+    std::vector<Job> jobsCpy = jsn;
 
+    for (size_t i = 0; i < jobs.size(); ++i)
+    {
+        REQUIRE(jobs[i] == jobsCpy[i]);
+    }
 }
 
 TEST_CASE("Serializer: preprocessor magic")
@@ -69,23 +82,40 @@ TEST_CASE("Serializer: preprocessor magic")
     REQUIRE(int2 == 111);
 }
 
+namespace ns {
+    // a simple struct to model a person
+    struct person {
+        std::string name;
+        std::string address;
+        int age;
+    };
+}
 
 TEST_CASE("Serializer: using nlohmann json header")
 {
-    nlohmann::json j;
+    using nlohmann::json;
 
-    std::vector<int> ints{ 3,5,76,78,8,9, 90,0,-3,-3 };
-    j["ints"] = ints;
-    std::cout << j.dump();
+    auto res = ::SetConsoleOutputCP(CP_UTF8);
+    setvbuf(stdout, nullptr, _IOFBF, 4000);
 
+    ns::person p = { u8"Wiesenhütter", u8"Sapînta", 60 };
+    json j;
+    j["name"] = p.name;
+    j["address"] = p.address;
+    j["age"] = p.age;
+    
     std::vector<Job> jobs{
-        { 1, 2.2, L"tamping", true },
-        { 3, 4.4, L"slabtrack", false },
-        { 5, 6.6, L"süürvey", true } };
+        { 1, 2.2, u8"tamping Üø", true },
+        { 3, 4.4, "slabtrack", false },
+        { 5, 6.6, u8"süürvey", true } };
+
     j["jobs"] = jobs;
 
-    std::cout << j.dump();
+    std::cout  << std::setw(2) << j << std::flush;
 
+    std::ostringstream oss;
+    oss << std::setw(2) << j << std::flush;
 
+    json copy1{ oss.str() };
 }
 

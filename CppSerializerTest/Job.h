@@ -1,63 +1,41 @@
 #pragma once
 
+#include "JsonSerialization.h"
+#include "json.hpp"
 #include <string>
 #include <vector>
 #include <ostream>
 #include <istream>
-#include "JsonSerialization.h"
-#include "record.h"
+#include <codecvt>
+
 
 class Job
 {
 public:
     Job() 
-        : Job(0,0.0,L"",false)
+        : Job(0,0.0,"",false)
     {
     };
 
-    Job(int i, double d, std::wstring ws, bool r)
+    Job(int i, double d, std::string ws, bool r)
         : inum(i), myValue(d), name(ws), isRelative(r) 
     {
-        init();
     }
 
     void to_json(nlohmann::json& jsn) const
     {
-        jsn = nlohmann::json{  KEY_VAL(inum) , KEY_VAL(myValue), KEY_VAL(name), KEY_VAL(isRelative) };
+        jsn["inum"] = inum;
+        jsn["myValue"] = myValue;
+        jsn["name"] = name;
+        jsn["isRelative"] = isRelative;
     }
 
-
-    std::ostream& toJson(std::ostream& os)
+    void from_json(const nlohmann::json& jsn)
     {
-        using namespace atjson;
-
-        JsonObject j(os, "Job");
-
-        return atjson::write(os,
-            KEY_VAL(inum),
-            KEY_VAL(myValue),
-            KEY_VAL(name),
-            KEY_VAL(isRelative));
-    }
-
-    std::istream& fromJson(std::istream& is)
-    {
-        return atjson::read(is,
-            KEY_VALPTR(inum),
-            KEY_VALPTR(myValue),
-            KEY_VALPTR(name),
-            KEY_VALPTR(isRelative));
-    }
-
-
-    void init()
-    {
-        records = std::vector<Record>{
-            { "inum",       Record::DataType::INT, &inum },
-            { "myValue",    Record::DataType::DBL, &myValue },
-            { "name",       Record::DataType::STR, &name },
-            { "isRelative", Record::DataType::BOOL, &isRelative }
-        };
+        inum = jsn.at("inum").get<int>();
+        myValue = jsn.at("myValue").get<double>();
+        name = jsn.at("name").get<std::string>();
+        isRelative = jsn.at("isRelative").get<bool>();
     }
 
     bool operator== (const Job& j) const;
@@ -65,13 +43,9 @@ public:
 private:
     int inum{};
     double myValue{};
-    std::wstring name;
+    std::string name;
     bool isRelative{};
-
-    friend std::ostream& operator<<(std::ostream& os, const Job& j);
-    friend std::istream& operator>>(std::istream& is, Job& j);
     
-    std::vector<Record> records;
     };
 
 
@@ -80,21 +54,13 @@ bool Job::operator== (const Job& j) const
     return (inum == j.inum && myValue == j.myValue && name == j.name && isRelative == j.isRelative);
 }
 
-std::istream& operator>>(std::istream& is, Job& j)
-{
-    is >> j.records;
-    return is;
-}
-
-std::ostream& operator<< (std::ostream& os, const Job& j)
-{
-    os << j.records;
-    return os;
-}
-
 void to_json(nlohmann::json& jsn, const Job& job)
 {
     job.to_json(jsn);
 }
 
+void from_json(const nlohmann::json& jsn, Job& job)
+{
+    job.from_json(jsn);
+}
 
